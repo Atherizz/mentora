@@ -1,5 +1,6 @@
-require('dotenv').config(); 
+require('dotenv').config();
 const process = require('process');
+
 module.exports = {
   development: {
     database: process.env.DB_NAME,
@@ -19,7 +20,10 @@ module.exports = {
     username: process.env.DB_USER,
     password: process.env.DB_PASSWORD,
     database: process.env.DB_NAME,
-    host: `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`,
+    host: 'localhost',
     dialect: 'mysql',
+    dialectOptions: {
+      socketPath: `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`,
+    },
   },
 };
