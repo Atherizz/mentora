@@ -19,7 +19,7 @@ const streakRoutes = require('./routes/streak_self_harm');
 const db = require('./models');
 const emologRoutes = require('./routes/emolog');
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -42,7 +42,7 @@ app.use('/api/alora', aloraRoutes);
 app.use('/api/streak', streakRoutes);
 db.sequelize.sync().then(() => {
   console.log('Database synced');
-  app.listen(PORT, '127.0.0.1', () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server running at http://0.0.0.0:${PORT}`);
   });
 });
