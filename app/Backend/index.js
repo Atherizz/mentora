@@ -1,10 +1,10 @@
 const express = require('express');
-const bodyParser = require('body-parser');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
-require('dotenv').config();
-const process = require('process');
+require('dotenv').config(); 
+const db = require('./models');
+
 const authRoutes = require('./routes/auth');
 const postRoutes = require('./routes/post');
 const commentRoutes = require('./routes/comment');
@@ -15,19 +15,18 @@ const emologHistoryRoutes = require('./routes/emologHistory');
 const appointmentRoutes = require('./routes/appointment');
 const emologClusterRoutes = require('./routes/emologCluster');
 const aloraRoutes = require('./routes/alora');
-const streakRoutes = require('./routes/streak_self_harm');
-const db = require('./models');
 const emologRoutes = require('./routes/emolog');
-const app = express();
-const PORT = process.env.PORT || 5000;
 
-app.use(express.json());
-app.use(bodyParser.urlencoded({ extended: false }));
-app.use(bodyParser.json());
-app.use(cors());
+const app = express();
+
 app.use(helmet());
+app.use(cors()); 
 app.use(morgan('dev'));
-app.get('/', (req, res) => res.send('Hello, World!'));
+app.use(express.json({ limit: '1mb' }));
+app.use(express.urlencoded({ extended: true }));
+
+app.get('/health', (_, res) => res.send('ok'));
+
 app.use('/api/auth', authRoutes);
 app.use('/api/emolog', emologRoutes);
 app.use('/api/post', postRoutes);
@@ -39,10 +38,16 @@ app.use('/api/profile', userProfileRoutes);
 app.use('/api/emolog-history', emologHistoryRoutes);
 app.use('/api/emolog-cluster', emologClusterRoutes);
 app.use('/api/alora', aloraRoutes);
-app.use('/api/streak', streakRoutes);
-db.sequelize.sync().then(() => {
-  console.log('Database synced');
-  app.listen(PORT, '127.0.0.1', () => {
-    console.log(`Server running at http://127.0.0.1:${PORT}`);
-  });
-});
+
+const PORT = process.env.PORT || 8080;
+
+(async () => {
+  try {
+    await db.sequelize.authenticate();
+    console.log('✅ DB connected');
+  } catch (err) {
+    console.error('⚠️ DB connection error:', err.message);
+  } finally {
+    app.listen(PORT, '0.0.0.0', () => console.log('🚀 BE on', PORT));
+  }
+})();
