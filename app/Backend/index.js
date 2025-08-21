@@ -27,6 +27,9 @@ app.use(express.urlencoded({ extended: true }));
 
 app.get('/health', (_, res) => res.send('ok'));
 
+app.get('/', (req, res) => {
+  res.send('🚀 Mentora API jalan masbroo');
+});
 app.use('/api/auth', authRoutes);
 app.use('/api/emolog', emologRoutes);
 app.use('/api/post', postRoutes);
@@ -38,6 +41,7 @@ app.use('/api/profile', userProfileRoutes);
 app.use('/api/emolog-history', emologHistoryRoutes);
 app.use('/api/emolog-cluster', emologClusterRoutes);
 app.use('/api/alora', aloraRoutes);
+
 
 const PORT = process.env.PORT || 8080;
 
