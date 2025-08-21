@@ -7,7 +7,9 @@
     "build": "remix vite:build",
     "dev": "remix vite:dev",
     "lint": "eslint --ignore-path .gitignore --cache --cache-location ./node_modules/.cache/eslint .",
-    "start": "nodemon Node app/Backend/index.js",
+    "start": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "backend": "nodemon app/Backend/index.js",
+    "frontend": "remix vite:dev",
     "typecheck": "tsc",
     "migrate": "cross-env NODE_ENV=development npx sequelize-cli db:migrate"
   },
@@ -43,6 +45,7 @@
     "@typescript-eslint/eslint-plugin": "^6.7.4",
     "@typescript-eslint/parser": "^6.7.4",
     "autoprefixer": "^10.4.19",
+    "concurrently": "^9.2.0",
     "cross-env": "^10.0.0",
     "eslint": "^8.38.0",
     "eslint-import-resolver-typescript": "^3.6.1",
