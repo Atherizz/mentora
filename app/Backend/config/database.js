@@ -3,7 +3,7 @@ require('dotenv').config();
 const process = require('process');
 
 const sequelize = new Sequelize(process.env.DB_NAME, process.env.DB_USER, process.env.DB_PASSWORD, {
-  host: process.env.DB_HOST,
+  host: `/cloudsql/${process.env.INSTANCE_CONNECTION_NAME}`,
   port: process.env.DB_PORT,
   dialect: 'mysql',
   logging: process.env.NODE_ENV === 'development' ? console.log : false,
