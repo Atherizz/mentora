@@ -29,4 +29,12 @@ export default defineConfig({
     host: "0.0.0.0",
     port: process.env.PORT ? parseInt(process.env.PORT) : 8080,
   },
+  build: {
+    outDir: "build/client",
+    rollupOptions: {
+      output: {
+        format: "cjs", 
+      },
+    },
+  },
 });
