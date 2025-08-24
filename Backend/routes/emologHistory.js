@@ -97,4 +97,37 @@ router.get('/', jwtAuthMiddleware, async (req, res) => {
   }
 });
 
+router.delete('/:id', jwtAuthMiddleware, async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { id } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: 'User ID required' });
+    }
+
+    if (!id) {
+      return res.status(400).json({ error: 'History ID required' });
+    }
+
+    const history = await EmologHistory.findOne({
+      where: {
+        id,
+        user_id: userId
+      }
+    });
+
+    if (!history) {
+      return res.status(404).json({ error: 'History not found or not owned by user' });
+    }
+    await history.destroy();
+
+    res.json({ message: 'Emolog history deleted successfully' });
+  } catch (error) {
+    console.error('Delete emolog history:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+
 module.exports = router;

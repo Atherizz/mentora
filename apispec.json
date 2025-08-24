@@ -1,0 +1,617 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Specification",
+    "description": "Dokumentasi API lengkap untuk backend service.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080/api",
+      "description": "Development Server"
+    }
+  ],
+  "tags": [
+    { "name": "Authentication", "description": "Registrasi dan Login Pengguna" },
+    { "name": "User Profile", "description": "Manajemen profil pengguna" },
+    { "name": "Chatbot", "description": "Interaksi dengan AI Chatbot" },
+    { "name": "Emolog", "description": "Pencatatan dan riwayat emosi pengguna" },
+    { "name": "Dashboard", "description": "Endpoint untuk analisis data pemerintah" },
+    { "name": "Posts", "description": "Manajemen postingan komunitas" },
+    { "name": "Comments", "description": "Manajemen komentar pada postingan" },
+    { "name": "Psychologist Profile", "description": "Manajemen profil psikolog" },
+    { "name": "Psychologist Schedule", "description": "Manajemen jadwal konsultasi psikolog" },
+    { "name": "Appointments", "description": "Manajemen janji temu konsultasi" },
+    { "name": "Self-Harm Streak", "description": "Manajemen data streak self-harm" }
+  ],
+  "paths": {
+    "/auth/register": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Registrasi pengguna baru",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": { "type": "string", "example": "John Doe" },
+                  "email": { "type": "string", "example": "john.doe@example.com" },
+                  "password": { "type": "string", "example": "password123" },
+                  "role": { "type": "string", "enum": ["user", "psikolog", "pemerintah"], "example": "user" },
+                  "nip": { "type": "string", "description": "Wajib jika role='pemerintah'", "example": "199001012020121001" },
+                  "str_proof": { "type": "string", "format": "binary", "description": "File bukti STR. Wajib jika role='psikolog'" }
+                },
+                "required": ["name", "email", "password", "role"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Registrasi berhasil" },
+          "400": { "description": "Input tidak valid" },
+          "409": { "description": "Email sudah terdaftar" }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "Login pengguna",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": { "type": "string", "example": "john.doe@example.com" },
+                  "password": { "type": "string", "example": "password123" }
+                },
+                "required": ["email", "password"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login berhasil, mengembalikan data user dan token" },
+          "401": { "description": "Email atau password salah" }
+        }
+      }
+    },
+    "/auth/user": {
+      "get": {
+        "tags": ["Authentication"],
+        "summary": "Mendapatkan data pengguna yang sedang login",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Data pengguna berhasil diambil" },
+          "401": { "description": "Tidak terotentikasi" },
+          "404": { "description": "Pengguna tidak ditemukan" }
+        }
+      }
+    },
+    "/user-profile": {
+      "get": {
+        "tags": ["User Profile"],
+        "summary": "Mendapatkan profil pengguna yang sedang login",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Profil berhasil diambil" },
+          "404": { "description": "Profil tidak ditemukan" }
+        }
+      },
+      "post": {
+        "tags": ["User Profile"],
+        "summary": "Membuat profil untuk pengguna yang sedang login",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Profil berhasil dibuat" },
+          "409": { "description": "Profil sudah ada" }
+        }
+      },
+      "put": {
+        "tags": ["User Profile"],
+        "summary": "Memperbarui profil pengguna yang sedang login",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil berhasil diperbarui" },
+          "404": { "description": "Profil tidak ditemukan" }
+        }
+      }
+    },
+    "/chatbot/sessions": {
+      "get": {
+        "tags": ["Chatbot"],
+        "summary": "Mendapatkan semua sesi chat pengguna",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mengambil daftar sesi" }
+        }
+      }
+    },
+    "/chatbot/new-chat": {
+      "post": {
+        "tags": ["Chatbot"],
+        "summary": "Memulai sesi chat baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "prompt": { "type": "string" } },
+                "required": ["prompt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Chat baru berhasil dibuat dan direspon" }
+        }
+      }
+    },
+    "/chatbot/chat/{session_id}": {
+      "get": {
+        "tags": ["Chatbot"],
+        "summary": "Mendapatkan riwayat pesan dari sebuah sesi",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "session_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "responses": {
+          "200": { "description": "Berhasil mengambil riwayat chat" }
+        }
+      },
+      "post": {
+        "tags": ["Chatbot"],
+        "summary": "Mengirim pesan ke sesi chat yang sudah ada",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "session_id", "in": "path", "required": true, "schema": { "type": "string", "format": "uuid" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "prompt": { "type": "string" } },
+                "required": ["prompt"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Pesan berhasil dikirim dan direspon" }
+        }
+      }
+    },
+    "/emolog": {
+      "get": {
+        "tags": ["Emolog"],
+        "summary": "Mendapatkan riwayat emolog pengguna",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mengambil riwayat emolog" }
+        }
+      },
+      "post": {
+        "tags": ["Emolog"],
+        "summary": "Mencatat entri emolog baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "text": { "type": "string", "example": "Hari ini saya merasa sangat senang sekali!" },
+                  "subdistrict_id": { "type": "integer", "example": 1 }
+                },
+                "required": ["text", "subdistrict_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Emolog berhasil dicatat" }
+        }
+      }
+    },
+    "/dashboard": {
+      "get": {
+        "tags": ["Dashboard"],
+        "summary": "Mendapatkan data emolog teragregasi (khusus pemerintah)",
+        "description": "Endpoint ini mengambil data emolog yang sudah dikelompokkan dan dapat memberikan analisis jika diminta.",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "group_by", "in": "query", "schema": { "type": "string", "enum": ["subdistrict", "district"], "default": "subdistrict" } },
+          { "name": "start_date", "in": "query", "schema": { "type": "string", "format": "date", "example": "2025-01-01" } },
+          { "name": "end_date", "in": "query", "schema": { "type": "string", "format": "date", "example": "2025-12-31" } },
+          { "name": "emotion", "in": "query", "schema": { "type": "string", "description": "Pisahkan dengan koma jika lebih dari satu", "example": "senang,sedih" } },
+          { "name": "gender", "in": "query", "schema": { "type": "string", "enum": ["L", "P"] } },
+          { "name": "analyze", "in": "query", "schema": { "type": "boolean", "default": false } }
+        ],
+        "responses": {
+          "200": { "description": "Data berhasil diambil. Mungkin berisi `insights` jika `analyze=true`." }
+        }
+      }
+    },
+    "/posts": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Mendapatkan semua postingan",
+        "responses": {
+          "200": { "description": "Berhasil mengambil semua postingan" }
+        }
+      },
+      "post": {
+        "tags": ["Posts"],
+        "summary": "Membuat postingan baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "content": { "type": "string", "example": "Ini adalah isi postingan saya." },
+                  "images": { "type": "array", "items": { "type": "string", "format": "binary" }, "description": "Maksimal 5 gambar" }
+                },
+                "required": ["content"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Postingan berhasil dibuat" }
+        }
+      }
+    },
+    "/posts/{id}": {
+      "get": {
+        "tags": ["Posts"],
+        "summary": "Mendapatkan detail satu postingan",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Berhasil mengambil detail postingan" },
+          "404": { "description": "Postingan tidak ditemukan" }
+        }
+      }
+    },
+    "/comments": {
+      "post": {
+        "tags": ["Comments"],
+        "summary": "Menambahkan komentar baru pada postingan",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "comment": { "type": "string", "example": "Sangat setuju!" },
+                  "post_id": { "type": "integer", "example": 1 }
+                },
+                "required": ["comment", "post_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Komentar berhasil dibuat" },
+          "404": { "description": "Postingan tidak ditemukan" }
+        }
+      }
+    },
+    "/comments/{id}": {
+      "get": {
+        "tags": ["Comments"],
+        "summary": "Mendapatkan semua komentar dari satu postingan",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "description": "ID Postingan", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Berhasil mengambil komentar" }
+        }
+      },
+      "put": {
+        "tags": ["Comments"],
+        "summary": "Mengedit komentar milik sendiri",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "description": "ID Komentar", "schema": { "type": "integer" } }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "comment": { "type": "string", "example": "Komentar yang sudah diupdate." } },
+                "required": ["comment"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Komentar berhasil diupdate" },
+          "404": { "description": "Komentar tidak ditemukan" }
+        }
+      },
+      "delete": {
+        "tags": ["Comments"],
+        "summary": "Menghapus komentar milik sendiri",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "description": "ID Komentar", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Komentar berhasil dihapus" },
+          "404": { "description": "Komentar tidak ditemukan" }
+        }
+      }
+    },
+    "/psikolog-profile": {
+      "get": {
+        "tags": ["Psychologist Profile"],
+        "summary": "Mendapatkan semua profil psikolog",
+        "responses": {
+          "200": { "description": "Berhasil mengambil data" }
+        }
+      },
+      "post": {
+        "tags": ["Psychologist Profile"],
+        "summary": "Membuat profil psikolog (khusus psikolog)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PsikologProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Profil berhasil dibuat" },
+          "409": { "description": "Profil sudah ada" }
+        }
+      },
+      "put": {
+        "tags": ["Psychologist Profile"],
+        "summary": "Memperbarui profil psikolog (khusus psikolog)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PsikologProfileInput" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Profil berhasil diupdate" },
+          "404": { "description": "Profil tidak ditemukan" }
+        }
+      }
+    },
+    "/psikolog-profile/me": {
+      "get": {
+        "tags": ["Psychologist Profile"],
+        "summary": "Mendapatkan profil psikolog yang sedang login",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mengambil profil" },
+          "404": { "description": "Profil tidak ditemukan" }
+        }
+      }
+    },
+    "/psikolog-schedule": {
+      "get": {
+        "tags": ["Psychologist Schedule"],
+        "summary": "Mendapatkan semua jadwal psikolog yang tersedia",
+        "responses": {
+          "200": { "description": "Berhasil mengambil data jadwal" }
+        }
+      },
+      "post": {
+        "tags": ["Psychologist Schedule"],
+        "summary": "Membuat jadwal baru (khusus psikolog)",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/PsikologScheduleInput" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Jadwal berhasil dibuat" },
+          "409": { "description": "Jadwal duplikat" }
+        }
+      }
+    },
+    "/psikolog-schedule/me": {
+      "get": {
+        "tags": ["Psychologist Schedule"],
+        "summary": "Mendapatkan semua jadwal milik psikolog yang login",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mengambil data" },
+          "404": { "description": "Jadwal tidak ditemukan" }
+        }
+      }
+    },
+    "/psikolog-schedule/psikolog/{id}": {
+      "get": {
+        "tags": ["Psychologist Schedule"],
+        "summary": "Mendapatkan semua jadwal dari psikolog tertentu",
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "description": "ID Psikolog", "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Berhasil mengambil data" },
+          "404": { "description": "Jadwal tidak ditemukan" }
+        }
+      }
+    },
+    "/appointments": {
+      "post": {
+        "tags": ["Appointments"],
+        "summary": "Membuat janji temu baru",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "schedule_id": { "type": "integer" } },
+                "required": ["schedule_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Janji temu berhasil dibuat" },
+          "400": { "description": "Kuota penuh" },
+          "404": { "description": "Jadwal tidak ditemukan" },
+          "409": { "description": "Anda sudah memiliki janji temu pada jadwal ini" }
+        }
+      }
+    },
+    "/appointments/cancel": {
+      "delete": {
+        "tags": ["Appointments"],
+        "summary": "Membatalkan janji temu",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": { "appointment_id": { "type": "integer" } },
+                "required": ["appointment_id"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Janji temu berhasil dibatalkan" },
+          "404": { "description": "Janji temu tidak ditemukan" }
+        }
+      }
+    },
+    "/appointments/me": {
+      "get": {
+        "tags": ["Appointments"],
+        "summary": "Mendapatkan riwayat dan detail janji temu pengguna",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mengambil data" }
+        }
+      }
+    },
+    "/streak/start": {
+      "post": {
+        "tags": ["Self-Harm Streak"],
+        "summary": "Memulai streak 'bebas dari self-harm'",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "201": { "description": "Streak berhasil dibuat" },
+          "400": { "description": "Pengguna sudah memiliki data streak" }
+        }
+      }
+    },
+    "/streak/reset": {
+      "put": {
+        "tags": ["Self-Harm Streak"],
+        "summary": "Mereset streak ke hari ini",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Streak berhasil direset" },
+          "404": { "description": "Data streak tidak ditemukan" }
+        }
+      }
+    },
+    "/streak": {
+      "get": {
+        "tags": ["Self-Harm Streak"],
+        "summary": "Mendapatkan jumlah hari streak saat ini",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Berhasil mengambil data streak" }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "UserProfileInput": {
+        "type": "object",
+        "properties": {
+          "district_id": { "type": "integer", "example": 1 },
+          "subdistrict_id": { "type": "integer", "example": 1 },
+          "gender": { "type": "string", "enum": ["L", "P"], "example": "L" },
+          "birthdate": { "type": "string", "format": "date", "example": "2000-01-20" }
+        },
+        "required": ["district_id", "subdistrict_id", "gender", "birthdate"]
+      },
+      "PsikologProfileInput": {
+        "type": "object",
+        "properties": {
+          "nama_tempat_praktek": { "type": "string", "example": "Klinik Sehat Jiwa" },
+          "alamat_tempat_praktek": { "type": "string", "example": "Jl. Kemerdekaan No. 17" },
+          "pengalaman_dalam_tahun": { "type": "integer", "example": 5 },
+          "no_wa": { "type": "string", "example": "081234567890" }
+        },
+        "required": ["nama_tempat_praktek", "alamat_tempat_praktek", "pengalaman_dalam_tahun", "no_wa"]
+      },
+      "PsikologScheduleInput": {
+        "type": "object",
+        "properties": {
+          "date": { "type": "string", "format": "date", "example": "2025-09-15" },
+          "start_time": { "type": "string", "format": "time", "example": "09:00:00" },
+          "end_time": { "type": "string", "format": "time", "example": "11:00:00" },
+          "kuota": { "type": "integer", "example": 5 },
+          "jenis_konsultasi": { "type": "string", "enum": ["online", "offline"], "example": "online" },
+          "harga": { "type": "integer", "example": 150000 }
+        },
+        "required": ["date", "start_time", "end_time", "kuota", "jenis_konsultasi", "harga"]
+      }
+    },
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    }
+  }
+}
